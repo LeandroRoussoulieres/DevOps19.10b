@@ -1,16 +1,42 @@
 const fs = require('fs');
-const reportFile = process.argv[2] || 'dist/relatorio.json';
-const report = JSON.parse(fs.readFileSync(reportFile, 'utf8'));
-const errors = [];
+const path = require('path');
 
-if (report.summary.total < 5) errors.push('o lote deve conter pelo menos 5 candidatos');
-if (report.summary.approved + report.summary.waiting !== report.summary.total) errors.push('totais do relatório são inconsistentes');
-if (!Array.isArray(report.approved)) errors.push('lista de aprovados ausente');
-if (report.approved.length !== report.summary.approved) errors.push('quantidade de aprovados não corresponde ao resumo');
+const auditPath = path.join(__dirname, '../dist/auditoria.json');
 
-if (errors.length > 0) {
-  console.error('QUALITY GATE REPROVADO');
-  errors.forEach((error) => console.error(` ${error}`));
-  process.exit(1);
+try {
+    console.log('Iniciando verificação do Quality Gate Financeiro...');
+
+    // 1. Verifica se o ficheiro de auditoria existe
+    if (!fs.existsSync(auditPath)) {
+        throw new Error('Ficheiro de auditoria não encontrado. O estágio anterior falhou?');
+    }
+
+    const rawData = fs.readFileSync(auditPath, 'utf8');
+    const auditoria = JSON.parse(rawData);
+
+    // 2. Regra do Gate: O lote não pode estar vazio
+    if (auditoria.processedRecords === 0) {
+        throw new Error('Quality Gate reprovou: O lote não contém registos processados.');
+    }
+
+    // 3. Regra do Gate: O valor total não pode ser nulo ou negativo
+    if (auditoria.totalApprovedAmount <= 0) {
+        throw new Error('Quality Gate reprovou: O valor total aprovado é inválido (zero ou negativo).');
+    }
+
+    // 4. Regra do Gate: Integridade garantida (Hash presente)
+    if (!auditoria.fileHashSha256 || auditoria.fileHashSha256.trim() === '') {
+        throw new Error('Quality Gate reprovou: Assinatura de integridade (Hash SHA-256) ausente.');
+    }
+
+    console.log('✅ Quality Gate financeiro aprovado com sucesso!');
+    console.log(` - Registos processados: ${auditoria.processedRecords}`);
+    console.log(` - Valor total validado: R$ ${auditoria.totalApprovedAmount}`);
+    console.log(` - Assinatura do lote confirmada.`);
+    
+    process.exit(0); // Sucesso, permite que a pipeline avance
+
+} catch (error) {
+    console.error('❌', error.message);
+    process.exit(1); // Falha, bloqueia a pipeline do Jenkins imediatamente
 }
-console.log('QUALITY GATE APROVADO');

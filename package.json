@@ -1,13 +1,14 @@
 {
-  "name": "portal-resultados-ci",
-  "version": "1.1.0",
+  "name": "lote-auxilios",
+  "version": "1.0.0",
+  "description": "Laboratório de DevOps - Caso 2 (Liberação controlada de lote de auxílios)",
+  "main": "src/validateBatch.js",
   "scripts": {
-    "validate:data": "node src/validateCandidates.js data/candidatos.json",
-    "test": "node test/validateCandidates.test.js",
-    "check:version": "node scripts/checkVersionSync.js",
-    "build": "node src/buildReport.js",
-    "manifest": "node scripts/writeManifest.js",
-    "gate": "node scripts/qualityGate.js dist/relatorio.json",
-    "ci": "npm run validate:data && npm test && npm run check:version && npm run build"
-  }
+    "validate": "node src/validateBatch.js data/lote.json",
+    "test": "node --test test/*.test.js",
+    "audit": "node scripts/generateAudit.js",
+    "gate": "node scripts/qualityGate.js"
+  },
+  "author": "",
+  "license": "ISC"
 }

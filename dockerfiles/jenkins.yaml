@@ -14,35 +14,37 @@ jenkins:
   authorizationStrategy: loggedInUsersCanDoAnything
   crumbIssuer:
     standard: {}
-  nodes:  
-  - permanent:
-      labelString: "docker jenkins agent"
-      launcher:
-        ssh:
-          credentialsId: "jenkins-ssh-agent-private-key"
-          host: "desktop-jenkins_agent-1"
-          port: 22
-          sshHostKeyVerificationStrategy:
-            nonVerifyingKeyVerificationStrategy: {}
-      name: "docker-ssh-jenkins-agent"
-      nodeDescription: "ssh jenkins docker agent "
-      remoteFS: "/home/jenkins/agent"
-      retentionStrategy: "always"
+  nodes:
+    - permanent:
+        labelString: "docker jenkins agent"
+        launcher:
+          ssh:
+            credentialsId: "jenkins-ssh-agent-private-key"
+            host: "desktop-jenkins_agent-1"
+            port: 22
+            sshHostKeyVerificationStrategy:
+              nonVerifyingKeyVerificationStrategy: {}
+        name: "docker-ssh-jenkins-agent"
+        nodeDescription: "ssh jenkins docker agent "
+        remoteFS: "/home/jenkins/agent"
+        retentionStrategy: "always"
+  disabledAdministrativeMonitors:
+    - hudson.diagnosis.ReverseProxySetupMonitor
 credentials:
   system:
     domainCredentials:
-    - credentials:
-      - basicSSHUserPrivateKey:
-          id: "jenkins-ssh-agent-private-key"
-          description: "private ssh key for jenkins agent "
-          privateKeySource:
-            directEntry:
-              privateKey: ${readFile:/ssh-dir/jenkins_agent_ed}
-          scope: SYSTEM
-          username: "jenkins"
+      - credentials:
+          - basicSSHUserPrivateKey:
+              id: "jenkins-ssh-agent-private-key"
+              description: "private ssh key for jenkins agent "
+              privateKeySource:
+                directEntry:
+                  privateKey: ${readFile:/ssh-dir/jenkins_agent_ed}
+              scope: SYSTEM
+              username: "jenkins"
 security:
   contentSecurityPolicy:
     enforce: true
 unclassified:
   location:
-    url: "http://127.0.0.1:8080/"
+    url: "https://petrifying-toad-q7x45wx644wp2g5q-8080.app.github.dev/"
