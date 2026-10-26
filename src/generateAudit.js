@@ -25,11 +25,11 @@ const audit = {
     competence: batch.metadata.competence,
     status: validation.errors.length === 0 ? 'APROVADO' : 'REPROVADO',
     paymentCount: batch.payments.length,
-    total: validation.totalAmount, // Mapeado do nosso validateBatch.js
+    total: validation.totalAmount,
     budgetLimit: batch.metadata.budgetLimit,
     errors: validation.errors,
     warnings: validation.warnings || [],
-    inputSha256: sha256(raw),
+    fileHashSha256: sha256(raw), // Corrigido de inputSha256 para fileHashSha256
     commit: process.env.GIT_COMMIT || 'local',
     buildNumber: process.env.BUILD_NUMBER || 'local',
     generatedAt: new Date().toISOString()
