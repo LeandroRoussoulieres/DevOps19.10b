@@ -1,0 +1,15 @@
+{
+  "metadata": {
+    "processo": "Seleção 2026.2",
+    "version": "1.1.0",
+    "publishedAt": "2026-10-19T12:00:00Z",
+    "minimumScore": 60
+  },
+  "candidates": [
+    { "registration": "MAT-1001", "cpf": "11122233344", "name": "Ana Souza", "score": 82, "status": "APROVADO" },
+    { "registration": "MAT-1002", "cpf": "22233344455", "name": "Bruno Lima", "score": 74, "status": "APROVADO" },
+    { "registration": "MAT-1003", "cpf": "33344455566", "name": "Carla Reis", "score": 58, "status": "LISTA_ESPERA" },
+    { "registration": "MAT-1004", "cpf": "44455566677", "name": "Diego Alves", "score": 91, "status": "APROVADO" },
+    { "registration": "MAT-1005", "cpf": "55566677788", "name": "Thiago Oliveira", "score": 22, "status": "LISTA_ESPERA" }
+  ]
+}
