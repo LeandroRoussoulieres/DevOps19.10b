@@ -1,65 +1,116 @@
 pipeline {
     agent any
+    
     parameters {
-        choice(name: 'ATRASO_PUBLICACAO', choices: ['0', '20', '45'], description: 'Segundos usados para observar o controle de concorrência.')
+        choice(
+            name: 'DESTINO',
+            choices: ['HOMOLOGACAO', 'PRODUCAO'],
+            description: 'Ambiente para o qual o lote será preparado.'
+        )
     }
+    
     options {
         timestamps()
-        timeout(time: 12, unit: 'MINUTES')
-        buildDiscarder(logRotator(numToKeepStr: '15'))
-        disableConcurrentBuilds(abortPrevious: true)
+        timeout(time: 15, unit: 'MINUTES')
+        buildDiscarder(logRotator(numToKeepStr: '20'))
+        disableConcurrentBuilds()
     }
+    
     environment {
-        APP_NAME = 'portal-resultados-ci'
-        DIST_DIR = 'dist'
+        APP_NAME = 'lote-auxilios-ci'
+        AUDIT_FILE = 'dist/auditoria.json'
+        RELEASE_FILE = 'dist/lote-liberado.json'
     }
+    
     stages {
         stage('1. Sincronizar código') {
             steps {
                 checkout scm
                 sh '''
-                    echo "COMMIT COMPLETO=$(git rev-parse HEAD)"
-                    echo "COMMIT_CURTO=$(git rev-parse --short HEAD)"
-                    echo "ULTIMO COMMIT=$(git log -1 --pretty=format:'%h | %an | %s')"
-                    git status --short
+                echo "COMMIT=$(git rev-parse HEAD)"
+                echo "MENSAGEM=$(git log -1 --pretty=%s)"
                 '''
             }
         }
-        stage('2. Diagnosticar ambiente') {
+        
+        stage('2. Validar lote') {
             steps {
-                sh 'node --version'
-                sh 'npm --version'
-                sh 'find . -maxdepth 2 -type f | sort'
+                sh 'npm run validate'
             }
         }
-        stage('3. Validar dados') { steps { sh 'npm run validate:data' } }
-        stage('4. Executar testes') { steps { sh 'npm test' } }
-        stage('5. Sincronizar versões') { steps { sh 'npm run check:version' } }
-        stage('6. Gerar publicação') {
+        
+        stage('3. Executar testes') {
             steps {
-                sh 'rm -rf "$DIST_DIR"'
-                sh 'npm run build'
-                sh 'npm run manifest'
+                sh 'npm test'
             }
         }
-        stage('7. Quality Gate') { steps { sh 'npm run gate' } }
-        stage('8. Janela de publicação') {
+        
+        stage('4. Gerar auditoria') {
             steps {
-                script {
-                    int seconds = params.ATRASO_PUBLICACAO.toInteger()
-                    echo "Recurso de publicação reservado por ${seconds}s"
-                    sleep time: seconds, unit: 'SECONDS'
-                }
+                sh 'rm -rf dist'
+                sh 'npm run audit'
             }
         }
-        stage('9. Arquivar evidências') {
-            steps { archiveArtifacts artifacts: 'dist/**', fingerprint: true }
+        
+        stage('5. Quality Gate financeiro') {
+            steps {
+                sh 'npm run gate'
+            }
+        }
+        
+        stage('6. Revisar evidências') {
+            steps {
+                sh 'cat "$AUDIT_FILE"'
+                sh 'sha256sum data/lote.json "$RELEASE_FILE"'
+            }
+        }
+        
+        stage('7. Aprovação para produção') {
+            when {
+                expression { params.DESTINO == 'PRODUCAO' }
+            }
+            steps {
+                input message: 'Confirma a liberação deste lote para PRODUÇÃO?', ok: 'LIBERAR LOTE'
+            }
+        }
+        
+        stage('8. Publicar lote') {
+            when {
+                expression { params.DESTINO == 'PRODUCAO' }
+            }
+            steps {
+                sh '''
+                mkdir -p release
+                cp "$RELEASE_FILE" "release/lote-${BUILD_NUMBER}.json"
+                cp "$AUDIT_FILE" "release/auditoria-${BUILD_NUMBER}.json"
+                ls -lh release
+                '''
+                archiveArtifacts artifacts: 'release/**', fingerprint: true
+            }
+        }
+        
+        stage('9. Arquivar homologação') {
+            when {
+                expression { params.DESTINO == 'HOMOLOGACAO' }
+            }
+            steps {
+                archiveArtifacts artifacts: 'dist/**', fingerprint: true
+            }
         }
     }
+    
     post {
-        success { echo "PUBLICAÇÃO APROVADA ${APP_NAME} #${BUILD_NUMBER}" }
-        failure { echo "PUBLICAÇÃO BLOQUEADA consulte o estágio e o Console Output" }
-        aborted { echo 'EXECUÇÃO ABORTADA uma revisão mais recente assumiu o processo' }
-        always { echo "RESULTADO FINAL: ${currentBuild.currentResult}" }
+        success {
+            echo "PROCESSO APROVADO destino=${params.DESTINO}"
+        }
+        failure {
+            echo 'PROCESSO REPROVADO lote não liberado'
+        }
+        aborted {
+            echo 'PROCESSO CANCELADO nenhuma liberação realizada'
+        }
+        always {
+            echo "RESULTADO FINAL: ${currentBuild.currentResult}"
+        }
     }
 }
