@@ -1,48 +1,47 @@
 const fs = require('fs');
 const crypto = require('crypto');
-const path = require('path');
+const { validateBatch } = require('./validateBatch.js');
 
-const inputPath = path.join(__dirname, '../data/lote.json');
-const distDir = path.join(__dirname, '../dist');
-const releasePath = path.join(distDir, 'lote-liberado.json');
-const auditPath = path.join(distDir, 'auditoria.json');
+// 1. Ler o ficheiro de entrada
+const raw = fs.readFileSync('data/lote.json', 'utf8');
+const batch = JSON.parse(raw);
 
-try {
-    // 1. Criar o diretório de distribuição, caso não exista
-    if (!fs.existsSync(distDir)) {
-        fs.mkdirSync(distDir, { recursive: true });
-    }
+// 2. Executar a validação para obter os erros e o total
+const validation = validateBatch(batch);
 
-    // 2. Ler os dados do lote original
-    const rawData = fs.readFileSync(inputPath, 'utf8');
-    const lote = JSON.parse(rawData);
+// 3. Função para gerar o SHA-256
+function sha256(data) {
+    return crypto.createHash('sha256').update(data).digest('hex');
+}
 
-    // 3. Calcular o valor total aprovado para o relatório
-    const totalAmount = lote.payments.reduce((acc, curr) => acc + (curr.approved ? curr.amount : 0), 0);
+// 4. Garantir que a pasta dist/ existe
+if (!fs.existsSync('dist')) {
+    fs.mkdirSync('dist');
+}
 
-    // 4. Gerar o hash SHA-256 para garantir a imutabilidade e integridade dos dados
-    const hash = crypto.createHash('sha256').update(rawData).digest('hex');
+// 5. Montar o objeto de auditoria exatamente como no slide
+const audit = {
+    batchId: batch.metadata.batchId,
+    competence: batch.metadata.competence,
+    status: validation.errors.length === 0 ? 'APROVADO' : 'REPROVADO',
+    paymentCount: batch.payments.length,
+    total: validation.totalAmount, // Mapeado do nosso validateBatch.js
+    budgetLimit: batch.metadata.budgetLimit,
+    errors: validation.errors,
+    warnings: validation.warnings || [],
+    inputSha256: sha256(raw),
+    commit: process.env.GIT_COMMIT || 'local',
+    buildNumber: process.env.BUILD_NUMBER || 'local',
+    generatedAt: new Date().toISOString()
+};
 
-    // 5. Estruturar o documento de auditoria
-    const auditoria = {
-        timestamp: new Date().toISOString(),
-        batchId: lote.metadata.batchId,
-        competence: lote.metadata.competence,
-        processedRecords: lote.payments.length,
-        totalApprovedAmount: totalAmount,
-        fileHashSha256: hash,
-        generatedBy: "Pipeline CI/CD - Jenkins"
-    };
+// 6. Escrever o ficheiro de auditoria
+fs.writeFileSync('dist/auditoria.json', `${JSON.stringify(audit, null, 2)}\n`);
 
-    // 6. Escrever os artefactos finais na pasta dist/
-    fs.writeFileSync(releasePath, rawData); // Mantém o ficheiro original intacto
-    fs.writeFileSync(auditPath, JSON.stringify(auditoria, null, 2));
-
-    console.log('✅ Artefactos gerados com sucesso.');
-    console.log(` - Lote copiado para: ${releasePath}`);
-    console.log(` - Relatório de auditoria criado em: ${auditPath}`);
-    
-} catch (error) {
-    console.error('❌ Erro crítico ao gerar a auditoria:', error.message);
-    process.exit(1);
+// 7. Escrever o lote liberado apenas se não houver erros (como sugerido pela linha 33 cortada)
+if (validation.errors.length === 0) {
+    fs.writeFileSync('dist/lote-liberado.json', raw);
+    console.log('✅ Auditoria gerada: LOTE APROVADO.');
+} else {
+    console.log('❌ Auditoria gerada: LOTE REPROVADO.');
 }
