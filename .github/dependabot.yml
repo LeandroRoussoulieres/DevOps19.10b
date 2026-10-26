@@ -1,0 +1,139 @@
+# Please see the documentation for all configuration options:
+# https://docs.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
+
+version: 2
+# Note: GitHub Codespaces uses devcontainer.json which Dependabot cannot monitor (not a Dockerfile).
+# Codespaces dependencies (yq, devcontainer features) are tracked by UpdateCLI.
+# See updatecli/updatecli.d/codespaces.yaml for automated updates.
+
+# Enable version updates for GitHub Actions workflows
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: weekly
+    ignore:
+      # Ignore updates for dependencies with names containing "github-script"
+      - dependency-name: "*github-script*"
+
+  # Enable version updates for Docker
+  - package-ecosystem: docker
+    directory: "./dockerfiles"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+  - package-ecosystem: docker
+    directory: "./dockerfiles/maven"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+  - package-ecosystem: docker
+    directory: "./dockerfiles/multi"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+  - package-ecosystem: docker
+    directory: "./dockerfiles/node"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+  - package-ecosystem: docker
+    directory: "./dockerfiles/python"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+  - package-ecosystem: docker
+    directory: "./dockerfiles/sidekick"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10    
+  - package-ecosystem: docker
+    directory: "./dockerfiles/agent-discovery"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+  - package-ecosystem: docker
+    directory: "./dockerfiles/android"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+  - package-ecosystem: docker
+    directory: "./dockerfiles/golang"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+  - package-ecosystem: docker
+    directory: "./dockerfiles/dotnet"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+
+  # Updates targeting the weekly branch
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    target-branch: "weekly"
+    schedule:
+      interval: weekly
+    ignore:
+      - dependency-name: "*github-script*"
+
+  - package-ecosystem: docker
+    directory: "./dockerfiles"
+    target-branch: "weekly"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+  - package-ecosystem: docker
+    directory: "./dockerfiles/maven"
+    target-branch: "weekly"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+  - package-ecosystem: docker
+    directory: "./dockerfiles/multi"
+    target-branch: "weekly"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+  - package-ecosystem: docker
+    directory: "./dockerfiles/node"
+    target-branch: "weekly"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+  - package-ecosystem: docker
+    directory: "./dockerfiles/python"
+    target-branch: "weekly"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+  - package-ecosystem: docker
+    directory: "./dockerfiles/sidekick"
+    target-branch: "weekly"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+  - package-ecosystem: docker
+    directory: "./dockerfiles/agent-discovery"
+    target-branch: "weekly"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+  - package-ecosystem: docker
+    directory: "./dockerfiles/android"
+    target-branch: "weekly"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+  - package-ecosystem: docker
+    directory: "./dockerfiles/golang"
+    target-branch: "weekly"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+  - package-ecosystem: docker
+    directory: "./dockerfiles/dotnet"
+    target-branch: "weekly"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10

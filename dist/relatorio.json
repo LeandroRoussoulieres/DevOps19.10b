@@ -1,0 +1,27 @@
+{
+  "process": "Seleção 2026.2",
+  "version": "1.1.0",
+  "generatedAt": "2026-10-26T14:47:27.768Z",
+  "summary": {
+    "total": 5,
+    "approved": 3,
+    "waiting": 2
+  },
+  "approved": [
+    {
+      "registration": "MAT-1001",
+      "name": "Ana Souza",
+      "score": 82
+    },
+    {
+      "registration": "MAT-1002",
+      "name": "Bruno Lima",
+      "score": 74
+    },
+    {
+      "registration": "MAT-1004",
+      "name": "Diego Alves",
+      "score": 91
+    }
+  ]
+}

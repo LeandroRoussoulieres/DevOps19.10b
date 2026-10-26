@@ -1,0 +1,47 @@
+name: 'deps(dockerfile): bump image "debian" digest'
+
+scms:
+  default:
+    kind: github
+    spec:
+      user: "{{ .github.user }}"
+      email: "{{ .github.email }}"
+      owner: "{{ .github.owner }}"
+      repository: "{{ .github.repository }}"
+      token: "{{ requiredEnv .github.token }}"
+      username: "{{ .github.username }}"
+      branch: "{{ .github.branch }}"
+
+sources:
+  trixieLatestVersion:
+    kind: dockerimage
+    name: "Get the latest Debian Trixie Linux version"
+    spec:
+      image: "debian"
+      tagfilter: "trixie-*"
+      versionfilter:
+        kind: regex
+        pattern: >-
+          trixie-\d+$
+
+targets:
+  debian:
+    name: 'deps(dockerfile): bump image "debian"'
+    scmid: default
+    kind: dockerfile
+    spec:
+      file: dockerfiles/sidekick/Dockerfile
+      instruction:
+        keyword: FROM
+        matcher: debian
+    sourceid: trixieLatestVersion
+
+actions:
+  default:
+    kind: github/pullrequest
+    scmid: default
+    title: Bump Debian Trixie Linux version to {{ source "trixieLatestVersion" }}
+    spec:
+      labels:
+        - dependencies
+        - debian-trixie
